@@ -20,7 +20,6 @@ func (c *client) listenProxy() error {
 			return
 		}
 
-		fmt.Println("targetURL: ", targetURL)
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
 		r.Host = targetURL.Host
 

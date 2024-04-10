@@ -3,6 +3,7 @@ version: v3
 tasks:
   dev:
     env:
+      CONFIG_PATH: ./bin/config.yaml
       ENDPOINT: localhost:8001
     cmds:
       - nodemon -q -e 'go' --signal SIGTERM --exec "task build && ./bin/server || exit 0"
@@ -20,7 +21,7 @@ tasks:
     env:
       CGO_ENABLED: 0
     cmds:
-      - go build -o ./bin/server main.go
+      - go build  -ldflags="-s -w -X github.com/kloudlite/iot-devices/constants.Debug=false" -o ./bin/server main.go
 
   build:arm:
     env:

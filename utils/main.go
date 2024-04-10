@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/iot-devices/constants"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 func IsConn() bool {
@@ -23,4 +24,13 @@ func IsConn() bool {
 	}
 
 	return false
+}
+
+func GenerateWgKeys() ([]byte, []byte, error) {
+	key, err := wgtypes.GenerateKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return []byte(key.PublicKey().String()), []byte(key.String()), nil
 }

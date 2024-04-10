@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/kloudlite/iot-devices/devices/common"
 	"github.com/kloudlite/iot-devices/devices/hub"
 	"github.com/kloudlite/iot-devices/devices/local"
 	"github.com/kloudlite/iot-devices/pkg/logging"
@@ -11,17 +12,20 @@ import (
 )
 
 func main() {
+	go common.StartPing()
+
 	// if err := Run(); err != nil {
 	// 	println(err.Error())
 	// }
 
-	if err := OnlyLocal(); err != nil {
-		println(err.Error())
-	}
-	//
-	// if err := OnlyHub(); err != nil {
+	// if err := OnlyLocal(); err != nil {
 	// 	println(err.Error())
 	// }
+	//
+	if err := OnlyHub(); err != nil {
+		println(err.Error())
+	}
+
 }
 
 func OnlyLocal() error {
@@ -96,5 +100,4 @@ func Run() error {
 			continue
 		}
 	}
-
 }

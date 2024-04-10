@@ -13,14 +13,25 @@ const (
 	ExpireDuration = 10
 
 	ProxyServerPort = 8000
+
+	PingInterval = 5
+	PingTimeout  = 3
 )
+
+var (
+	Debug = "false"
+)
+
+func IsDebug() bool {
+	return Debug == "true"
+}
 
 func GetHealthyUrl() string {
 	return fmt.Sprintf("https://%s/healthy", IotServerEndpoint)
 }
 
-func GetIotPingPath() string {
-	return "/healthy"
+func GetPingUrl() string {
+	return fmt.Sprintf("https://localhost:%d/healthy", ProxyServerPort)
 }
 
 func GetIotServerEndpoint() string {

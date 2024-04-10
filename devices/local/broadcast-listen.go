@@ -49,7 +49,9 @@ func (c *client) listenBroadcast() error {
 		}
 
 		if addr.String() != localAddr.String() {
-			c.logger.Infof("Received message from %s: %s", addr, string(buffer[:n]))
+			if constants.IsDebug() {
+				c.logger.Infof("Received message from %s: %s", addr, string(buffer[:n]))
+			}
 
 			hubs[addr.IP.String()] = hub{
 				lastPing: time.Now(),
