@@ -1,0 +1,31 @@
+version: v3
+
+tasks:
+  dev:
+    env:
+      ENDPOINT: localhost:8001
+    cmds:
+      - nodemon -q -e 'go' --signal SIGTERM --exec "task build && ./bin/server || exit 0"
+
+  scp:
+    preconditions:
+      - sh: '[ -n "{{.IP}}" ]'
+        msg: 'var IP must have a value'
+    cmds:
+      - ssh raspberry@{{.IP}} 'rm -f /home/raspberry/server'
+      - scp ./bin/server-arm raspberry@{{.IP}}:/home/raspberry/server
+      - ssh raspberry@{{.IP}} 'sudo reboot'
+
+  build:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -o ./bin/server main.go
+
+  build:arm:
+    env:
+      CGO_ENABLED: 0
+      GOARCH: arm64
+    cmds:
+      - go build -o ./bin/server-arm main.go
+      - upx ./bin/server-arm

@@ -1,0 +1,12 @@
+Description=My Go Program
+After=network.target
+
+[Service]
+Type=simple
+User=raspberry
+ExecStart=/bin/bash /home/raspberry/startup.sh
+Restart=always
+RestartSec=4
+
+[Install]
+WantedBy=multi-user.target
