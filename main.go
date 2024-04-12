@@ -17,8 +17,6 @@ func main() {
 	flag.StringVar(&mode, "mode", "default", "--mode [local|hub|default]")
 	flag.Parse()
 
-	go common.StartPing()
-
 	switch mode {
 	case "local":
 		if err := onlyLocal(); err != nil {
@@ -78,6 +76,8 @@ func run() error {
 	if err != nil {
 		return err
 	}
+
+	go common.StartPing(l)
 
 	_, cf := context.WithCancel(context.Background())
 
