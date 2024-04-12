@@ -12,6 +12,17 @@ import (
 	"github.com/kloudlite/iot-devices/pkg/logging"
 )
 
+var (
+	domains = []string{
+		constants.IotServerEndpoint,
+		constants.DnsDomain,
+	}
+)
+
+func GetDomains() []string {
+	return domains
+}
+
 func StartPing() {
 
 	l, err := logging.New(&logging.Options{})
@@ -21,7 +32,7 @@ func StartPing() {
 
 	for {
 		if err := ping(); err != nil {
-			l.Errorf(err, "Failed to ping server")
+			l.Errorf(err, "sending ping to server")
 		}
 
 		time.Sleep(constants.PingInterval * time.Second)
@@ -39,7 +50,7 @@ func ping() error {
 	}
 
 	var data = struct {
-		PublicKey string `json:"public_key"`
+		PublicKey string `json:"publicKey"`
 	}{
 		PublicKey: c.PublicKey,
 	}
@@ -56,9 +67,13 @@ func ping() error {
 	}
 	defer resp.Body.Close()
 
+	// read all the response body
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(resp.Body)
+
 	if resp.StatusCode == http.StatusOK {
 		return nil
 	}
 
-	return fmt.Errorf("Failed to ping server: %d", resp.StatusCode)
+	return fmt.Errorf("status code: %d", resp.StatusCode)
 }

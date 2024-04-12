@@ -4,6 +4,7 @@ import "fmt"
 
 const (
 	IotServerEndpoint = "iotnet.dev.kloudlite.io"
+	DnsDomain         = "one.one.one.one"
 
 	BroadcastIP   = "255.255.255.255"
 	BroadcastPort = 12345
@@ -31,7 +32,7 @@ func GetHealthyUrl() string {
 }
 
 func GetPingUrl() string {
-	return fmt.Sprintf("https://localhost:%d/healthy", ProxyServerPort)
+	return fmt.Sprintf("https://%s/device", IotServerEndpoint)
 }
 
 func GetIotServerEndpoint() string {

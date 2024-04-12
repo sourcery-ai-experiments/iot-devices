@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/iot-devices/constants"
+	"github.com/kloudlite/iot-devices/devices/hub"
 )
 
 const (
@@ -26,35 +27,53 @@ func (c *client) listenBroadcast() error {
 		return err
 	}
 
-	c.logger.Infof("Listening for broadcast messages...")
-
 	conn, err := net.ListenUDP(udpConnType, listenAddr)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	c.logger.Infof("Listening for messages...")
-
 	buffer := make([]byte, 1024)
+
 	for {
-		if c.ctx.Err() != nil {
+		select {
+		case <-c.ctx.Done():
 			return fmt.Errorf("Context cancelled")
-		}
+		default:
 
-		n, addr, err := conn.ReadFromUDP(buffer)
-		if err != nil {
-			c.logger.Errorf(err, "Error reading from UDP connection")
-			continue
-		}
-
-		if addr.String() != localAddr.String() {
-			if constants.IsDebug() {
-				c.logger.Infof("Received message from %s: %s", addr, string(buffer[:n]))
+			// Set a timeout on the read operation
+			if err := conn.SetReadDeadline(time.Now().Add(constants.PingInterval * time.Second)); err != nil {
+				c.logger.Errorf(err, "Error setting read deadline")
+				continue
 			}
 
-			hubs[addr.IP.String()] = hub{
-				lastPing: time.Now(),
+			n, addr, err := conn.ReadFromUDP(buffer)
+			if err != nil {
+				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+					continue
+				}
+				c.logger.Errorf(err, "Error reading from UDP connection")
+				continue
+			}
+
+			if addr.String() != localAddr.String() {
+
+				var dm hub.Dms
+
+				if err := dm.FromBytes(buffer[:n]); err != nil {
+					c.logger.Errorf(err, "Error decoding message")
+					continue
+				}
+
+				if constants.IsDebug() {
+					c.logger.Infof("Received message from %s: %s", addr, string(buffer[:n]))
+				}
+
+				d := time.Now()
+				hubs[addr.IP.String()] = hb{
+					lastPing: &d,
+					domains:  dm,
+				}
 			}
 		}
 	}

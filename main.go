@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"time"
 
 	"github.com/kloudlite/iot-devices/devices/common"
@@ -12,24 +13,31 @@ import (
 )
 
 func main() {
+	var mode string
+	flag.StringVar(&mode, "mode", "default", "--mode [local|hub|default]")
+	flag.Parse()
+
 	go common.StartPing()
 
-	// if err := Run(); err != nil {
-	// 	println(err.Error())
-	// }
-
-	// if err := OnlyLocal(); err != nil {
-	// 	println(err.Error())
-	// }
-	//
-	if err := OnlyHub(); err != nil {
-		println(err.Error())
+	switch mode {
+	case "local":
+		if err := onlyLocal(); err != nil {
+			println(err.Error())
+		}
+	case "hub":
+		if err := onlyHub(); err != nil {
+			println(err.Error())
+		}
+	default:
+		if err := run(); err != nil {
+			println(err.Error())
+		}
 	}
-
 }
 
-func OnlyLocal() error {
+func onlyLocal() error {
 	l, err := logging.New(&logging.Options{})
+
 	if err != nil {
 		return err
 	}
@@ -46,7 +54,7 @@ func OnlyLocal() error {
 	return nil
 }
 
-func OnlyHub() error {
+func onlyHub() error {
 	l, err := logging.New(&logging.Options{})
 	if err != nil {
 		return err
@@ -63,31 +71,44 @@ func OnlyHub() error {
 	return nil
 }
 
-func Run() error {
-	l, err := logging.New(&logging.Options{})
+func run() error {
+	l, err := logging.New(&logging.Options{
+		Name: "ik-app",
+	})
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	_, cf := context.WithCancel(context.Background())
 
-	var isConnected = utils.IsConn()
+	var obj = struct {
+		IsConnected bool
+		cancel      context.CancelFunc
+	}{
+		IsConnected: utils.IsConn(),
+		cancel:      cf,
+	}
 
-	go func() {
+	go func(o *struct {
+		IsConnected bool
+		cancel      context.CancelFunc
+	}) {
 		for {
 			ic := utils.IsConn()
-			if isConnected != ic {
-				isConnected = ic
-				cancel()
+			if o.IsConnected != ic {
+				o.IsConnected = ic
+				l.Infof("Connection status changed to %v", o.IsConnected)
+				o.cancel()
 			}
 
 			time.Sleep(5 * time.Second)
 		}
-	}()
+	}(&obj)
 
 	for {
-		ctx, cancel = context.WithCancel(context.Background())
-		if isConnected {
+		ctx, cf2 := context.WithCancel(context.Background())
+		obj.cancel = cf2
+		if obj.IsConnected {
 			if err := hub.Run(ctx, l); err != nil {
 				l.Errorf(err, "Error running hub")
 				continue
