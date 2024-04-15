@@ -86,6 +86,11 @@ func ping(ctx types.MainCtx) error {
 			return err
 		}
 
+		if response.Reset {
+			ctx.GetLogger().Infof("Resetting device")
+			return k3s.New(ctx).Reset()
+		}
+
 		ctx.UpdateDevice(&response)
 
 		ip, err := networkmanager.GetIfIp()
