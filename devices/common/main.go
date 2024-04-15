@@ -5,77 +5,54 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/iot-devices/constants"
-	// "github.com/kloudlite/iot-devices/pkg/conf"
-	"github.com/kloudlite/iot-devices/pkg/logging"
+	"github.com/kloudlite/iot-devices/pkg/conf"
+	"github.com/kloudlite/iot-devices/pkg/k3s"
+	"github.com/kloudlite/iot-devices/pkg/networkmanager"
+	"github.com/kloudlite/iot-devices/types"
 )
 
-type Response struct {
-	AccountName       string `json:"accountName"`
-	CreationTime      string `json:"creationTime"`
-	DeploymentName    string `json:"deploymentName"`
-	DisplayName       string `json:"displayName"`
-	ID                string `json:"id"`
-	IP                string `json:"ip"`
-	MarkedForDeletion string `json:"markedForDeletion"`
-	Name              string `json:"name"`
-	PodCIDR           string `json:"podCIDR"`
-	ProjectName       string `json:"projectName"`
-	PublicKey         string `json:"publicKey"`
-	RecordVersion     int    `json:"recordVersion"`
-	ServiceCIDR       string `json:"serviceCIDR"`
-	UpdateTime        string `json:"updateTime"`
-	Version           string `json:"version"`
+func getConfig(ip, token string) string {
+	temp := `
+runAs: primaryMaster
+primaryMaster:
+  publicIP: {{ip}}
+  token: {{token}}
+  nodeName: master-1
+  labels: {"kloudlite.io/node.has-role":"primary-master","kloudlite.io/provider.name":"raspberry","kloudlite.io/release":"v1.0.5-nightly"}
+  SANs: ["{{ip}}"]
+  taints: ["node-role.kubernetes.io/master=:NoSchedule"]
+  extraServerArgs: ["--disable-helm-controller","--disable","traefik","--disable","servicelb","--node-external-ip",{{ip}},"--flannel-external-ip","--cluster-domain","cluster.local","--kubelet-arg","--system-reserved=cpu=100m,memory=200Mi,ephemeral-storage=1Gi,pid=1000","--disable-agent"]
+    `
+
+	s := strings.ReplaceAll(temp, "{{ip}}", ip)
+	s = strings.ReplaceAll(s, "{{token}}", token)
+
+	return s
 }
 
-func (c *Response) FromJson(data []byte) error {
-	return json.Unmarshal(data, c)
-}
-
-var (
-	domains = []string{
-		constants.IotServerEndpoint,
-		constants.DnsDomain,
-		"get.k3s.io",
-		"ghcr.io",
-		"registry.hub.docker.com",
-	}
-
-	device *Response = nil
-)
-
-func GetDomains() []string {
-	return domains
-}
-
-func GetDevice() (*Response, error) {
-	if device == nil {
-		return nil, fmt.Errorf("device is not initialized")
-	}
-	return device, nil
-}
-
-func StartPing(l logging.Logger) {
+func StartPing(ctx types.MainCtx) {
 	for {
-		if err := ping(l); err != nil {
-			l.Errorf(err, "sending ping to server")
+		if err := ping(ctx); err != nil {
+			ctx.GetLogger().Errorf(err, "sending ping to server")
 		}
 
 		time.Sleep(constants.PingInterval * time.Second)
 	}
 }
 
-func ping(l logging.Logger) error {
+func ping(ctx types.MainCtx) error {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	// c, err := conf.GetConf()
-	// if err != nil {
-	// 	return err
-	// }
+	c, err := conf.GetConf()
+	if err != nil {
+		return err
+	}
 
 	var data = struct {
 		PublicKey string `json:"publicKey"`
@@ -96,22 +73,28 @@ func ping(l logging.Logger) error {
 	}
 	defer resp.Body.Close()
 
-	var response Response
+	var response types.Response
 
 	// read all the response body
 	buf := new(bytes.Buffer)
 	_, err = buf.ReadFrom(resp.Body)
 
-	l.Infof("Ping response: %s", buf.String())
+	ctx.GetLogger().Infof("Ping response: %s", buf.String())
 	if resp.StatusCode == http.StatusOK {
 
 		if err := response.FromJson(buf.Bytes()); err != nil {
 			return err
 		}
 
-		device = &response
+		ctx.UpdateDevice(&response)
 
-		if err := reconDevice(l); err != nil {
+		ip, err := networkmanager.GetIfIp()
+		if err != nil {
+			return err
+		}
+
+		conf := getConfig(ip, string(c.PrivateKey))
+		if err := k3s.New(ctx).UpsertConfig(conf); err != nil {
 			return err
 		}
 

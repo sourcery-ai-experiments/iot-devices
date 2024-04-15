@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	// "github.com/adrg/xdg"
 	"github.com/kloudlite/iot-devices/constants"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -86,4 +87,16 @@ func GetIps(domain string) ([]string, error) {
 	}
 
 	return d, nil
+
 }
+
+// func GenerateRandomString(length int) string {
+// 	const charset = "abcdefghijklmnopqrstuvwxyz" +
+// 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+//
+// 	b := make([]byte, length)
+// 	for i := range b {
+// 		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+// 	}
+// 	return string(b)
+// }

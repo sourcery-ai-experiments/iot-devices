@@ -160,3 +160,35 @@ func ListRoutes(ip string) ([]netlink.Route, error) {
 	}
 	return routes, nil
 }
+
+func GetIfIp() (string, error) {
+	l, err := getDefaultLink()
+	i, err := net.InterfaceByName(l.Attrs().Name)
+	if err != nil {
+		return "", err
+	}
+
+	// Get a list of all unicast interface addresses
+	addrs, err := i.Addrs()
+	if err != nil {
+		return "", err
+	}
+
+	var ip net.IP
+
+	// Loop through all the addresses
+	for _, addr := range addrs {
+		if strings.Contains(addr.String(), ":") {
+			continue
+		}
+		switch v := addr.(type) {
+		case *net.IPNet:
+			ip = v.IP
+		case *net.IPAddr:
+			ip = v.IP
+		}
+		fmt.Printf("  IP Address: %s\n", ip.String())
+	}
+
+	return ip.String(), nil
+}
