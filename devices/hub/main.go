@@ -1,20 +1,22 @@
 package hub
 
 import (
-	"context"
-
-	"github.com/kloudlite/iot-devices/pkg/logging"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/iot-devices/types"
 )
 
 type client struct {
-	ctx    context.Context
+	ctx    types.MainCtx
 	logger logging.Logger
+
+	domains Dms
 }
 
-func Run(ctx context.Context, logger logging.Logger) error {
+func Run(ctx types.MainCtx) error {
 	c := &client{
-		ctx:    ctx,
-		logger: logger,
+		ctx:     ctx,
+		logger:  ctx.GetLogger(),
+		domains: Dms{},
 	}
 
 	c.logger.Infof("Starting hub")

@@ -37,7 +37,7 @@ func (c *client) listenBroadcast() error {
 
 	for {
 		select {
-		case <-c.ctx.Done():
+		case <-c.ctx.GetContext().Done():
 			return fmt.Errorf("Context cancelled")
 		default:
 
@@ -70,7 +70,7 @@ func (c *client) listenBroadcast() error {
 				}
 
 				d := time.Now()
-				hubs[addr.IP.String()] = hb{
+				c.hubs[addr.IP.String()] = hb{
 					lastPing: &d,
 					domains:  dm,
 				}
