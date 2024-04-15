@@ -33,3 +33,8 @@ cd /home/raspberry && ./server
 privateKey: "your_private_key"
 publicKey: "your_public_key"
 ```
+
+6. in `/boot/firmware/cmdline.txt` add the following line
+```bash
+cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory
+```

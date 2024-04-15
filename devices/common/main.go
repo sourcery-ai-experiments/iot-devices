@@ -25,7 +25,7 @@ primaryMaster:
   labels: {"kloudlite.io/node.has-role":"primary-master","kloudlite.io/provider.name":"raspberry","kloudlite.io/release":"v1.0.5-nightly"}
   SANs: ["{{ip}}"]
   taints: ["node-role.kubernetes.io/master=:NoSchedule"]
-  extraServerArgs: ["--disable-helm-controller","--disable","traefik","--disable","servicelb","--node-external-ip",{{ip}},"--flannel-external-ip","--cluster-domain","cluster.local","--kubelet-arg","--system-reserved=cpu=100m,memory=200Mi,ephemeral-storage=1Gi,pid=1000","--disable-agent"]
+  extraServerArgs: ["--disable-helm-controller","--disable","traefik","--disable","servicelb","--node-external-ip","{{ip}}","--cluster-domain","cluster.local","--kubelet-arg","--system-reserved=cpu=100m,memory=200Mi,ephemeral-storage=1Gi,pid=1000","--datastore-endpoint","sqlite:///var/lib/rancher/k3s/server/db/state.db"]
     `
 
 	s := strings.ReplaceAll(temp, "{{ip}}", ip)
