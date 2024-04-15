@@ -24,6 +24,8 @@ type Response struct {
 	ServiceCIDR       string `json:"serviceCIDR"`
 	UpdateTime        string `json:"updateTime"`
 	Version           string `json:"version"`
+
+	Reset bool `json:"reset"`
 }
 
 func (c *Response) FromJson(data []byte) error {

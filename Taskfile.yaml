@@ -29,6 +29,7 @@ tasks:
     cmds:
       - ssh raspberry@{{.IP}} 'rm -f /home/raspberry/server'
       - scp ./bin/server-arm raspberry@{{.IP}}:/home/raspberry/server
+      - scp ./k3s-setup.sh raspberry@{{.IP}}:/home/raspberry/k3s-setup.sh
       - ssh raspberry@{{.IP}} 'sudo reboot'
 
   build:
