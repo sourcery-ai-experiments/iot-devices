@@ -45,6 +45,10 @@ func (c *client) Reset() error {
 		return err
 	}
 
+	if err := os.RemoveAll(constants.K3sDataPath); err != nil {
+		return err
+	}
+
 	return c.Start()
 }
 
