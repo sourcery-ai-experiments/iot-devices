@@ -1,13 +1,13 @@
 package local
 
 import (
-	"context"
 	"slices"
 	"time"
 
+	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/iot-devices/constants"
 	"github.com/kloudlite/iot-devices/devices/hub"
-	"github.com/kloudlite/iot-devices/pkg/logging"
+	"github.com/kloudlite/iot-devices/types"
 )
 
 type hb struct {
@@ -66,17 +66,17 @@ func (h *hubstype) GetHubs() hubstype {
 	return d
 }
 
-var hubs = hubstype{}
-
 type client struct {
 	logger logging.Logger
-	ctx    context.Context
+	ctx    types.MainCtx
+	hubs   hubstype
 }
 
-func Run(ctx context.Context, logger logging.Logger) error {
+func Run(ctx types.MainCtx) error {
 	c := &client{
-		logger: logger,
+		logger: ctx.GetLogger(),
 		ctx:    ctx,
+		hubs:   hubstype{},
 	}
 
 	c.logger.Infof("Starting local")

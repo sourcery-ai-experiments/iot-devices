@@ -9,7 +9,7 @@ import (
 )
 
 func (c *client) setRules() error {
-	ips := hubs.GetHubs()
+	ips := c.hubs.GetHubs()
 
 	mark := map[string]int{}
 
@@ -28,10 +28,6 @@ func (c *client) setRules() error {
 			for _, ip := range ips {
 
 				met := mark[ip] + 1
-				// if err := utils.ExecCmd(fmt.Sprintf("ip route add %s via %s metric %d", ip, hub, met), true); err != nil {
-				// 	c.logger.Errorf(err, "error adding ip route")
-				// 	continue
-				// }
 
 				if err := networkmanager.AddRoute(fmt.Sprintf("%s/32", ip), hub, met); err != nil {
 					c.logger.Errorf(err, "error adding route")
@@ -47,10 +43,10 @@ func (c *client) setRules() error {
 
 	for {
 		select {
-		case <-c.ctx.Done():
+		case <-c.ctx.GetContext().Done():
 			return fmt.Errorf("context cancelled")
 		default:
-			m := hubs.GetHubs()
+			m := c.hubs.GetHubs()
 			if len(m) == 0 {
 				c.logger.Infof("No rules to add")
 			}
@@ -91,12 +87,6 @@ func (c *client) removeRules(ips map[string]hb) {
 					}
 				}
 
-				// err := utils.ExecCmd(fmt.Sprintf("ip route delete %s", ip), true)
-				// if err != nil {
-				// 	c.logger.Errorf(err, "error deleting ip route")
-				// 	continue
-				// }
-
 				mark[ip] = true
 			}
 		}
@@ -106,7 +96,7 @@ func (c *client) removeRules(ips map[string]hb) {
 
 func (c *client) ipTableRules() error {
 	for {
-		if c.ctx.Err() != nil {
+		if c.ctx.GetContext().Err() != nil {
 			return fmt.Errorf("context cancelled")
 		}
 		c.setRules()

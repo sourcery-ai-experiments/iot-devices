@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kloudlite/iot-devices/devices/common"
 	"github.com/kloudlite/iot-devices/utils"
 )
 
@@ -30,16 +29,10 @@ func (d *Dms) FromBytes(b []byte) error {
 	return nil
 }
 
-var domains = Dms{}
-
-func GetDomains() Dms {
-	return domains
-}
-
 func (c *client) resyncDomains() {
 	for {
 		nd := map[string][]string{}
-		for _, v := range common.GetDomains() {
+		for _, v := range c.ctx.GetDomains() {
 			s, err := utils.GetIps(v)
 			if err != nil {
 				c.logger.Errorf(err, "Error getting ips for domain %s", v)
@@ -47,11 +40,10 @@ func (c *client) resyncDomains() {
 			nd[v] = s
 		}
 
-		if fmt.Sprintf("%#v", nd) != fmt.Sprintf("%#v", domains) {
-			domains = nd
+		if fmt.Sprintf("%#v", nd) != fmt.Sprintf("%#v", c.domains) {
+			c.domains = nd
 		}
 
 		time.Sleep(5 * time.Second)
 	}
-
 }
