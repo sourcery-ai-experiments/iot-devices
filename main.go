@@ -18,13 +18,7 @@ func main() {
 	flag.StringVar(&mode, "mode", "default", "--mode [local|hub|default]")
 	flag.Parse()
 
-	mctx := types.NewMainCtxOrDie([]string{
-		constants.IotServerEndpoint,
-		constants.DnsDomain,
-		"get.k3s.io",
-		"ghcr.io",
-		"registry.hub.docker.com",
-	})
+	mctx := types.NewMainCtxOrDie(constants.DefaultExposedDomains)
 
 	switch mode {
 	case "local":

@@ -7,6 +7,7 @@ import (
 
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/iot-devices/constants"
+	"github.com/kloudlite/iot-devices/templates"
 	"github.com/kloudlite/iot-devices/types"
 
 	"github.com/kloudlite/iot-devices/utils"
@@ -82,4 +83,24 @@ func (c *client) UpsertConfig(cf string) error {
 	}
 
 	return c.write(cf)
+}
+
+func (c *client) ApplyInstallJob(accountName, clusterToken string) error {
+	b, err := templates.ParseTemplate(templates.AgentInstallJob, map[string]any{
+		"accountName":  accountName,
+		"clusterToken": clusterToken,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(constants.K3sJobFile, b, 0644); err != nil {
+		return err
+	}
+
+	if err := utils.ExecCmd(fmt.Sprintf("k3s kubectl apply -f %s", constants.K3sJobFile), true); err != nil {
+		return err
+	}
+
+	return nil
 }
