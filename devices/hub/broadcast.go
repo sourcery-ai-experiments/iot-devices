@@ -15,13 +15,12 @@ func (c *client) hc(conn *net.UDPConn) error {
 		time.Sleep(constants.PingInterval * time.Second)
 	}()
 
-	d := GetDomains()
-	message, err := d.ToBytes()
+	message, err := c.domains.ToBytes()
 	if err != nil {
 		return err
 	}
 
-	if c.ctx.Err() != nil {
+	if c.ctx.GetContext().Err() != nil {
 		return fmt.Errorf("Context cancelled")
 	}
 
